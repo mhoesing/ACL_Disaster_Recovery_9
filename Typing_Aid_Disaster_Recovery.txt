@@ -1,0 +1,149 @@
+********************************  Recording  ****************************************************
+http://unoconnect.adobeconnect.com/p12503795/
+
+************************************* Main Script *********************************************
+
+COMMENT ***** NOTE: Within the ACL project, create an empty table layout using the 
+COMMENT ***** Data Definition Wizard for each table to be restored.
+
+COMMENT ***** Set the environment.
+SET SAFETY OFF
+DELETE ALL OK
+
+COMMENT ***** Set the folder location and the directory path where the project is located
+SET FOLDER /Tables
+ASSIGN v_path "C:\Data\00_Current_Work\ACL_admin\ACL303 Functions and Scripts\ACL302 Scripts\Disaster_Recovery\"
+
+COMMENT **** Remove PDF table from prior runs of this script
+DELETE DR_Table_Layouts OK
+DELETE FORMAT DR_Table_Layouts OK
+
+
+COMMENT ***** Import the table layoyuts PDF file, one PDF file may contain multiple table layouts.
+COMMENT ***** Two fields will be read, a Table Layout/Data File field (from the Header) and a FieldInformation 
+COMMENT ***** field (from the Detail), the latter conatiang the field name, type, start, length, 
+COMMENT ***** and optionally decimals, dateformat, and alternate column description information, in a 80 character field
+IMPORT PDF TO DR_Table_Layouts "%v_path%DR_Table_Layouts.FIL" FROM "DR_Table_Layouts.pdf" 0 RECORD "Header1" 1 1 0 TEST 0 0 AT 1,1,0 7 "Table " FIELD "TableName_and_Datafile" C AT 1,7 SIZE 74,1 DEC 0 WID 74  PIC "" AS "" RECORD "Detail" 0 1 0 TEST 0 7 AT 1,1,0 1 " ASCII " TEST 0 7 AT 1,0,0 1 " DATE " TEST 0 7 AT 1,0,0 7 " PRINT " FIELD "Field_Information" C AT 1,1 SIZE 80,1 DEC 0 WID 81  PIC "" AS "" 
+
+
+COMMENT **** Data integirty check, read the log file after the script runs
+COMMENT **** See ACL Virtual Training "Data Acquisition Using Scripts" for checking VERIFY
+COMMENT **** command output before further processing the file(s) 
+VERIFY ALL
+
+
+COMMENT **** Create field definitions, 2 fields (tablename, datafilename) from the header field
+COMMENT **** then determine the number of table layouts that were in the PDF that are to be defined.
+IF FTYPE("table_name") <> "" DELETE table_name OK
+DEFINE FIELD table_name COMPUTED SUBSTR(ALLTRIM(SPLIT( TableName_and_Datafile, "'", 2 )), 1, 31)
+IF FTYPE("data_file") <> "" DELETE data_file OK
+DEFINE FIELD data_file COMPUTED  ALLTRIM(SPLIT( TableName_and_Datafile, "'", 4 ))
+CLASSIFY ON table_name TO "Unique_Tables.FIL" OPEN
+COUNT
+ASSIGN v_total_tables = COUNT1
+
+COMMENT **** Create field definitions for the 4 required (name, type, start, length) metrics of
+COMMENT **** a field, and the three optional (decimals, date format, alternate column description)
+COMMENT **** metrics for a field definition, using a conditional computed field.
+OPEN DR_Table_Layouts
+IF FTYPE("field_name") <> "" DELETE field_name OK
+DEFINE FIELD field_name COMPUTED SUBSTR(ALLTRIM(SPLIT( Field_Information, BLANKS( 1), 1 )), 1, 31)
+IF FTYPE("field_type") <> "" DELETE field_type OK
+DEFINE FIELD field_type COMPUTED SUBSTR(SPLIT(ALLTRIM(SPLIT(Field_Information, ALLTRIM( field_name), 2 )), BLANKS(1), 1), 1, 15)
+IF FTYPE("start") <> "" DELETE start OK
+DEFINE FIELD start COMPUTED VALUE(ALLTRIM(SUBSTR(SPLIT(ALLTRIM(SPLIT( Field_Information, ALLTRIM(field_type), 2 )), BLANKS(1), 1), 1, 15)), 0)
+IF FTYPE("length") <> "" DELETE length OK
+DEFINE FIELD length COMPUTED VALUE(ALLTRIM(SUBSTR(SPLIT(ALLTRIM(SPLIT( Field_Information, BLANKS(1) + ALLTRIM(STRING(start, 10)) + BLANKS(1), 2 )), BLANKS(1), 1), 1, 15)), 0)
+IF FTYPE("decimals") <> "" DELETE decimals OK
+DEFINE FIELD decimals COMPUTED
+optional description goes here
+VALUE(ALLTRIM(SUBSTR(SPLIT(ALLTRIM(SPLIT( Field_Information, BLANKS(1) + ALLTRIM(STRING(length, 10)) + BLANKS(1), 2 )), BLANKS(1), 1), 1, 15)), 0) IF field_type = "PRINT"
+0
+IF FTYPE("date_format") <> "" DELETE date_format OK
+DEFINE FIELD date_format COMPUTED 
+optional description goes here
+SUBSTR(SPLIT(SPLIT( Field_Information, " PICTURE ", 2 ), BLANKS(1), 1), 1, 10) IF FIND( " PICTURE ", Field_Information)
+BLANKS(10)
+IF FTYPE("alt_title") <> "" DELETE alt_title OK
+DEFINE FIELD alt_title COMPUTED 
+optional description goes here
+SPLIT(Field_Information, " AS ", 2) IF FIND(" AS ", Field_Information)
+BLANKS(10)
+
+
+COMMENT ***** Create a format (table layout) table for each unique table name
+COMMENT ***** counted above.
+ASSIGN v_table_counter = 1
+DO SCRIPT Create_Table_Layout WHILE v_table_counter <= v_total_tables
+
+COMMENT ***** Review the navigator panel and verify all the tables were restored.
+COMMENT ***** The last table created will be opened, open the others to ensure all fields were created.
+
+COMMENT ***** Remove temporary tables, publish variables and restore the environment.
+DELETE Unique_Tables.FIL OK
+DELETE FORMAT Unique_Tables OK
+DELETE temp_table.FIL OK
+DELETE FORMAT temp_table OK
+DISPLAY VARIABLES
+SET SAFETY ON
+
+
+
+
+*******************************  Script 2 Build A  table layout **********************************************
+COMMENT ***** Creates the fields (column) in each table layout found in the computed field "table_name"
+OPEN Unique_Tables 
+LOCATE RECORD v_table_counter
+ASSIGN v_table_name = table_name
+
+OPEN DR_Table_Layouts
+EXTRACT RECORD TO temp_table IF table_name = "%v_table_name%"
+OPEN temp_table
+COUNT
+ASSIGN v_fields_in_current_table = COUNT1
+
+ASSIGN v_field_counter = 1
+DO SCRIPT Create_a_Field WHILE v_field_counter <= v_fields_in_current_table
+
+COMMENT ***** Go back to the imported format file to get the next table
+OPEN DR_Table_Layouts
+
+ASSIGN v_table_counter = v_table_counter + 1
+
+COMMENT ***** Return to main script Read_a_Table_Layout_File
+
+
+
+*******************  Script 3, Define a Field, depending on the field Type  ******************************************
+COMMENT ***** Cycle through the records in the DR file pertient to the current table name 
+COMMENT ***** which are in "temp_table", read the 4 required and up to 3 optional metrics
+COMMENT ***** and create a field based on the type.
+
+OPEN temp_table
+LOCATE RECORD v_field_counter
+ASSIGN v_field_name = field_name
+ASSIGN v_field_type = field_type
+ASSIGN v_field_start = start
+ASSIGN v_field_length = length
+ASSIGN v_field_decimals = decimals
+ASSIGN v_field_date_format = date_format
+ASSIGN v_field_alt_title = alt_title
+
+
+OPEN %v_table_name%
+IF FTYPE("%v_field_name%") <> "" DELETE FIELD %v_field_name% OK
+
+IF ALLTRIM("%v_field_type%") = "ASCII" DEFINE FIELD %v_field_name% %v_field_type% %v_field_start% %v_field_length% AS %v_field_alt_title%
+
+IF ALLTRIM("%v_field_type%") = "DATE" DEFINE FIELD %v_field_name% %v_field_type% %v_field_start% %v_field_length% AS %v_field_alt_title% PIC %v_field_date_format%
+
+IF ALLTRIM("%v_field_type%") = "PRINT" DEFINE FIELD %v_field_name% %v_field_type% %v_field_start% %v_field_length% %v_field_decimals% AS %v_field_alt_title%         
+
+COMMENT ***** Add the new field to the default view and increment the field creation counter.
+DELETE COLUMN Default_View %v_field_name% OK
+DEFINE COLUMN Default_View %v_field_name%
+
+ASSIGN v_field_counter = v_field_counter + 1
+
+COMMENT ***** Return to calling script, Create_Table_Layout
+

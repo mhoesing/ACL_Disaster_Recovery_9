@@ -1,0 +1,392 @@
+@ACL900
+^LAYOUT   Payroll2                           34 D.T,
+date_paid      DATE        1   8   PICTURE "MMDDYYYY" AS "Pay;Date"  
+empno          ASCII       9   4   AS "Employee;Number"  
+empname        ASCII      13  12   AS "Employee;Name"  
+grosspay       PRINT      25   8 2 AS "Gross;Pay"  
+^LAYOUT   Employee_Master2                   42 D.T,
+empno          ASCII       1   4   AS "Employee;Number"  
+empname        ASCII       5  12   AS "Employee;Name"  
+empaddr        ASCII      17  15   AS "Employee;Address"  
+gender         ASCII      32   1   AS "Employee;Gender"  
+hiredate       DATE       33   8   PICTURE "MMDDYYYY" AS "Date of;Hire"  
+^LAYOUT   DR_Table_Layouts2                  135 D.T,
+TableName_and_Datafile ASCII       1  54    
+Field_Information ASCII      55  81    
+table_name     COMPUTED             
+ *C 31 1 
+ SUBSTR(ALLTRIM(SPLIT( TableName_and_Datafile, "'", 2 )), 1, 31)
+data_file      COMPUTED             
+ *C 54 1 
+ ALLTRIM(SPLIT( TableName_and_Datafile, "'", 4 ))
+field_name     COMPUTED             
+ *C 31 1 
+ SUBSTR(ALLTRIM(SPLIT( Field_Information, BLANKS( 1), 1 )), 1, 31)
+field_type     COMPUTED             
+ *C 15 1 
+ SUBSTR(SPLIT(ALLTRIM(SPLIT(Field_Information, ALLTRIM( field_name), 2 )), BLANKS(1), 1), 1, 15)
+start          COMPUTED            WIDTH 15  
+ *N 0 1
+ VALUE(ALLTRIM(SUBSTR(SPLIT(ALLTRIM(SPLIT( Field_Information, ALLTRIM(field_type), 2 )), BLANKS(1), 1), 1, 15)), 0)
+length         COMPUTED             
+ *N 0 1
+ VALUE(ALLTRIM(SUBSTR(SPLIT(ALLTRIM(SPLIT( Field_Information, ALLTRIM(STRING(start, 10)) + BLANKS(1), 2 )), BLANKS(1), 1), 1, 15)), 0)
+decimals       COMPUTED             
+ *N 0 2
+ VALUE(ALLTRIM(SUBSTR(SPLIT(ALLTRIM(SPLIT( Field_Information, ALLTRIM(STRING(length, 10)) + BLANKS(1), 2 )), BLANKS(1), 1), 1, 15)), 0) IF field_type = "PRINT"
+ 0
+date_format    COMPUTED             
+ *C 10 2 
+ SUBSTR(SPLIT(SPLIT( Field_Information, " PICTURE ", 2 ), BLANKS(1), 1), 1, 10) IF FIND( " PICTURE ", Field_Information)
+ BLANKS(1)
+alt_title      COMPUTED             
+ *C 81 2 
+ SPLIT(Field_Information, " AS ", 2) IF FIND(" AS ", Field_Information)
+ BLANKS(1)
+^LAYOUT   Payroll3                           34 D.T,
+date_paid      DATE        1   8   PICTURE "MMDDYYYY" AS "Pay;Date"  
+empno          ASCII       9   4   AS "Employee;Number"  
+empname        ASCII      13  12   AS "Employee;Name"  
+grosspay       PRINT      25   8 2 AS "Gross;Pay"  
+^LAYOUT   Employee_Master3                   42 D.T,
+^LAYOUT   Employee_Master                    42 D.T,
+empno          ASCII       1   4   AS "Employee;Number"  
+empname        ASCII       5  12   AS "Employee;Name"  
+empaddr        ASCII      17  15   AS "Employee;Address"  
+gender         ASCII      32   1   AS "Employee;Gender"  
+hiredate       DATE       33   8   PICTURE "MMDDYYYY" AS "Date of;Hire"  
+^LAYOUT   Payroll                            34 D.T,
+date_paid      DATE        1   8   PICTURE "MMDDYYYY"  
+empno          ASCII       9   4    
+empname        ASCII      13  12   AS "Employee;Name"  
+grosspay       PRINT      25   8 2  
+^LAYOUT   DR_Table_Layouts                   154 D.T,
+TableName_and_Datafile ASCII       1  74    
+Field_Information ASCII      75  80    
+table_name     COMPUTED             
+ *C 31 1 
+ SUBSTR(ALLTRIM(SPLIT( TableName_and_Datafile, "'", 2 )), 1, 31)
+data_file      COMPUTED             
+ *C 74 1 
+ ALLTRIM(SPLIT( TableName_and_Datafile, "'", 4 ))
+field_name     COMPUTED             
+ *C 31 1 
+ SUBSTR(ALLTRIM(SPLIT( Field_Information, BLANKS( 1), 1 )), 1, 31)
+field_type     COMPUTED             
+ *C 15 1 
+ SUBSTR(SPLIT(ALLTRIM(SPLIT(Field_Information, ALLTRIM( field_name), 2 )), BLANKS(1), 1), 1, 15)
+start          COMPUTED             
+ *N 0 1
+ VALUE(ALLTRIM(SUBSTR(SPLIT(ALLTRIM(SPLIT( Field_Information, ALLTRIM(field_type), 2 )), BLANKS(1), 1), 1, 15)), 0)
+length         COMPUTED             
+ *N 0 1
+ VALUE(ALLTRIM(SUBSTR(SPLIT(ALLTRIM(SPLIT( Field_Information, BLANKS(1) + ALLTRIM(STRING(start, 10)) + BLANKS(1), 2 )), BLANKS(1), 1), 1, 15)), 0)
+decimals       COMPUTED             optional description goes here
+ *N 0 2
+ VALUE(ALLTRIM(SUBSTR(SPLIT(ALLTRIM(SPLIT( Field_Information, BLANKS(1) + ALLTRIM(STRING(length, 10)) + BLANKS(1), 2 )), BLANKS(1), 1), 1, 15)), 0) IF field_type = "PRINT"
+ 0
+date_format    COMPUTED             optional description goes here
+ *C 20 2 
+ SUBSTR(SPLIT(SPLIT( Field_Information, " PICTURE ", 2 ), BLANKS(1), 1), 1, 20) IF FIND( " PICTURE ", Field_Information)
+ BLANKS(10)
+alt_title      COMPUTED             optional description goes here
+ *C 80 2 
+ SPLIT(Field_Information, " AS ", 2) IF FIND(" AS ", Field_Information)
+ BLANKS(10)
+^LOGFILE  ACL_Disaster_Recovery               "" "ACL_Disaster_Recovery.LOG"
+[PARENT_FOLDER_ID] 0
+^REPORT   Default_View                       Payroll2                         D.T,
+[SKIP] 0
+[TLINES] 2
+[RLINES] 1
+[LINE] 1
+date_paid            WIDTH 12
+[LINE] 1
+empno                WIDTH 8 PICTURE ""
+[LINE] 1
+empname              PICTURE ""
+[LINE] 1
+grosspay             PICTURE ""
+^REPORT   Default_View                       Employee_Master2                 D.T,
+[SKIP] 0
+[TLINES] 0
+[RLINES] 1
+[LINE] 1
+empno                WIDTH 8 PICTURE ""
+[LINE] 1
+empname              WIDTH 12 PICTURE ""
+[LINE] 1
+empaddr              WIDTH 15 PICTURE ""
+[LINE] 1
+gender               WIDTH 8 PICTURE ""
+[LINE] 1
+hiredate             WIDTH 12
+^REPORT   Default_View                       DR_Table_Layouts2                D.T,
+[SKIP] 0
+[TLINES] 1
+[RLINES] 1
+[LINE] 1
+table_name           WIDTH 12 PICTURE ""
+[LINE] 1
+data_file            WIDTH 14 PICTURE ""
+[LINE] 1
+field_name           WIDTH 7 PICTURE ""
+[LINE] 1
+field_type           WIDTH 7 PICTURE ""
+[LINE] 1
+start                WIDTH 6 PICTURE ""
+[LINE] 1
+length               WIDTH 6 PICTURE ""
+[LINE] 1
+decimals             WIDTH 7 PICTURE ""
+[LINE] 1
+date_format          WIDTH 11 PICTURE ""
+[LINE] 1
+alt_title            WIDTH 30 PICTURE ""
+[LINE] 1
+Field_Information    WIDTH 45 PICTURE ""
+[LINE] 1
+TableName_and_Datafile WIDTH 35 PICTURE ""
+^FOLDER   Tables                              1295826072
+[PARENT_FOLDER_ID] 0
+^FOLDER   Table_Backups                       1295826090
+[PARENT_FOLDER_ID] 0
+^FOLDER   Scripts                             1295826105
+[PARENT_FOLDER_ID] 0
+^FORMAT   Employee_Master2                   Employee_Master2                 "" "Employee_Master.txt" 0 ASCII 
+[PARENT_FOLDER_ID] 1295826090
+[LASTVIEW] "Default_View"
+^FORMAT   Payroll2                           Payroll2                         "" "Payroll.txt" 0 ASCII 
+[PARENT_FOLDER_ID] 1295826090
+[LASTVIEW] "Default_View"
+^FORMAT   DR_Table_Layouts2                  DR_Table_Layouts2                "" "DR_Table_Layouts.FIL" 0 ASCII 
+[PARENT_FOLDER_ID] 1295826090
+[LASTVIEW] "Default_View"
+[RETRIEVE] 0
+[REFRESH] PDF "C:\Data\00_Current_Work\ACL_admin\ACL303 Functions and Scripts\ACL302 Scripts\Disaster_Recovery\DR_Table_Layouts.FIL" FROM "DR_Table_Layouts.pdf" 0 RECORD "Header1" 1 1 0 TEST 0 0 AT 1,1,0 7 "Table " FIELD "TableName_and_Datafile" C AT 1,7 SIZE 54,1 DEC 0 WID 54  PIC "" AS "" RECORD "Detail" 0 1 0 TEST 0 7 AT 1,1,0 1 "ASCII" TEST 0 7 AT 1,0,0 1 "DATE" TEST 0 7 AT 1,0,0 7 "PRINT" FIELD "Field_Information" C AT 1,1 SIZE 81,1 DEC 0 WID 81  PIC "" AS "" 
+
+^BATCH    Create_Table_Layout                
+[PARENT_FOLDER_ID] 1295826105
+COMMENT ***** Creates the fields (column) in each table layout found in the computed field "table_name"
+OPEN Unique_Tables 
+LOCATE RECORD v_table_counter
+ASSIGN v_table_name = table_name
+
+OPEN DR_Table_Layouts
+EXTRACT RECORD TO temp_table IF table_name = "%v_table_name%"
+OPEN temp_table
+COUNT
+ASSIGN v_fields_in_current_table = COUNT1
+
+ASSIGN v_field_counter = 1
+DO SCRIPT Create_a_Field WHILE v_field_counter <= v_fields_in_current_table
+
+COMMENT ***** Go back to the imported format file to get the next table
+OPEN DR_Table_Layouts
+
+ASSIGN v_table_counter = v_table_counter + 1
+
+COMMENT ***** Return to main script Read_a_Table_Layout_File
+^REPORT   Default_View                       Payroll3                         D.T,
+[SKIP] 0
+[TLINES] 2
+[RLINES] 1
+[LINE] 1
+date_paid           
+[LINE] 1
+empno                WIDTH 8 PICTURE ""
+[LINE] 1
+empname              PICTURE ""
+[LINE] 1
+grosspay             WIDTH 12 PICTURE ""
+^FORMAT   Payroll3                           Payroll3                         "" "Payroll.txt" 0 ASCII 
+[PARENT_FOLDER_ID] 1295826090
+[LASTVIEW] "Default_View"
+^BATCH    Create_a_Field                     
+[PARENT_FOLDER_ID] 1295826105
+COMMENT ***** Cycle through the records in the DR file pertient to the current table name 
+COMMENT ***** which are in "temp_table", read the 4 required and up to 3 optional metrics
+COMMENT ***** and create a field based on the type.
+
+OPEN temp_table
+LOCATE RECORD v_field_counter
+ASSIGN v_field_name = field_name
+ASSIGN v_field_type = field_type
+ASSIGN v_field_start = start
+ASSIGN v_field_length = length
+ASSIGN v_field_decimals = decimals
+ASSIGN v_field_date_format = date_format
+ASSIGN v_field_alt_title = alt_title
+
+
+OPEN %v_table_name%
+IF FTYPE("%v_field_name%") <> "" DELETE FIELD %v_field_name% OK
+
+IF ALLTRIM("%v_field_type%") = "ASCII" AND NOT ISBLANK(v_field_alt_title) DEFINE FIELD %v_field_name% %v_field_type% %v_field_start% %v_field_length% AS %v_field_alt_title%
+IF ALLTRIM("%v_field_type%") = "ASCII" AND ISBLANK(v_field_alt_title) DEFINE FIELD %v_field_name% %v_field_type% %v_field_start% %v_field_length% 
+
+IF ALLTRIM("%v_field_type%") = "DATE" AND NOT ISBLANK(v_field_alt_title) DEFINE FIELD %v_field_name% %v_field_type% %v_field_start% %v_field_length% AS %v_field_alt_title% PIC %v_field_date_format%
+IF ALLTRIM("%v_field_type%") = "DATE" AND ISBLANK(v_field_alt_title) DEFINE FIELD %v_field_name% %v_field_type% %v_field_start% %v_field_length% PIC %v_field_date_format%
+
+IF ALLTRIM("%v_field_type%") = "PRINT" AND NOT ISBLANK(v_field_alt_title) DEFINE FIELD %v_field_name% %v_field_type% %v_field_start% %v_field_length% %v_field_decimals% AS %v_field_alt_title%         
+IF ALLTRIM("%v_field_type%") = "PRINT" AND ISBLANK(v_field_alt_title) DEFINE FIELD %v_field_name% %v_field_type% %v_field_start% %v_field_length% %v_field_decimals%          
+
+
+COMMENT ***** Add the new field to the default view and increment the field creation counter.
+DELETE COLUMN Default_View %v_field_name% OK
+DEFINE COLUMN Default_View %v_field_name%
+
+ASSIGN v_field_counter = v_field_counter + 1
+
+COMMENT ***** Return to calling script, Create_Table_Layout
+^FORMAT   Employee_Master3                   Employee_Master3                 "" "Employee_Master.txt" 0 ASCII 
+[PARENT_FOLDER_ID] 1295826105
+^BATCH    Read_a_Table_Layout_File           
+[PARENT_FOLDER_ID] 1295826105
+COMMENT ***** NOTE: Within the ACL project, create an empty table layout using the 
+COMMENT ***** Data Definition Wizard for each table to be restored.
+
+COMMENT ***** Set the environment.
+SET SAFETY OFF
+DELETE ALL OK
+
+COMMENT ***** Set the folder location and the directory path where the project is located
+SET FOLDER /Tables
+ASSIGN v_path "C:\Data\00_Current_Work\000_student_files\303_Functions_and_Scripts\Scripts_302\Disaster_Recovery\"
+
+COMMENT **** Remove PDF table from prior runs of this script
+DELETE DR_Table_Layouts OK
+DELETE FORMAT DR_Table_Layouts OK
+
+
+COMMENT ***** Import the table layoyuts PDF file, one PDF file may contain multiple table layouts.
+COMMENT ***** Two fields will be read, a Table Layout/Data File field (from the Header) and a FieldInformation 
+COMMENT ***** field (from the Detail), the latter containing the field name, type, start, length, 
+COMMENT ***** and optionally decimals, dateformat, and alternate column description information, in a 80 character field
+IMPORT PDF TO DR_Table_Layouts "%v_path%DR_Table_Layouts.FIL" FROM "DR_Table_Layouts.pdf" 0 RECORD "Header1" 1 1 0 TEST 0 0 AT 1,1,0 7 "Table " FIELD "TableName_and_Datafile" C AT 1,7 SIZE 74,1 DEC 0 WID 74  PIC "" AS "" RECORD "Detail" 0 1 0 TEST 0 7 AT 1,1,0 1 " ASCII " TEST 0 7 AT 1,0,0 1 " DATE " TEST 0 7 AT 1,0,0 7 " PRINT " FIELD "Field_Information" C AT 1,1 SIZE 80,1 DEC 0 WID 81  PIC "" AS "" 
+
+
+COMMENT **** Data integirty check, read the log file after the script runs
+COMMENT **** See ACL Virtual Training "Data Acquisition Using Scripts" for checking VERIFY
+COMMENT **** command output before further processing the file(s) 
+VERIFY ALL
+
+
+COMMENT **** Create field definitions, 2 fields (tablename, datafilename) from the header field
+COMMENT **** then determine the number of table layouts that were in the PDF that are to be defined.
+IF FTYPE("table_name") <> "" DELETE table_name OK
+DEFINE FIELD table_name COMPUTED SUBSTR(ALLTRIM(SPLIT( TableName_and_Datafile, "'", 2 )), 1, 31)
+IF FTYPE("data_file") <> "" DELETE data_file OK
+DEFINE FIELD data_file COMPUTED  ALLTRIM(SPLIT( TableName_and_Datafile, "'", 4 ))
+CLASSIFY ON table_name TO "Unique_Tables.FIL" OPEN
+COUNT
+ASSIGN v_total_tables = COUNT1
+
+COMMENT **** Create field definitions for the 4 required (name, type, start, length) metrics of
+COMMENT **** a field, and the three optional (decimals, date format, alternate column description)
+COMMENT **** metrics for a field definition, using a conditional computed field.
+OPEN DR_Table_Layouts
+IF FTYPE("field_name") <> "" DELETE field_name OK
+DEFINE FIELD field_name COMPUTED SUBSTR(ALLTRIM(SPLIT( Field_Information, BLANKS( 1), 1 )), 1, 31)
+IF FTYPE("field_type") <> "" DELETE field_type OK
+DEFINE FIELD field_type COMPUTED SUBSTR(SPLIT(ALLTRIM(SPLIT(Field_Information, ALLTRIM( field_name), 2 )), BLANKS(1), 1), 1, 15)
+IF FTYPE("start") <> "" DELETE start OK
+DEFINE FIELD start COMPUTED VALUE(ALLTRIM(SUBSTR(SPLIT(ALLTRIM(SPLIT( Field_Information, ALLTRIM(field_type), 2 )), BLANKS(1), 1), 1, 15)), 0)
+IF FTYPE("length") <> "" DELETE length OK
+DEFINE FIELD length COMPUTED VALUE(ALLTRIM(SUBSTR(SPLIT(ALLTRIM(SPLIT( Field_Information, BLANKS(1) + ALLTRIM(STRING(start, 10)) + BLANKS(1), 2 )), BLANKS(1), 1), 1, 15)), 0)
+IF FTYPE("decimals") <> "" DELETE decimals OK
+DEFINE FIELD decimals COMPUTED
+optional description goes here
+VALUE(ALLTRIM(SUBSTR(SPLIT(ALLTRIM(SPLIT( Field_Information, BLANKS(1) + ALLTRIM(STRING(length, 10)) + BLANKS(1), 2 )), BLANKS(1), 1), 1, 15)), 0) IF field_type = "PRINT"
+0
+IF FTYPE("date_format") <> "" DELETE date_format OK
+DEFINE FIELD date_format COMPUTED 
+optional description goes here
+SUBSTR(SPLIT(SPLIT( Field_Information, " PICTURE ", 2 ), BLANKS(1), 1), 1, 20) IF FIND( " PICTURE ", Field_Information)
+BLANKS(10)
+IF FTYPE("alt_title") <> "" DELETE alt_title OK
+DEFINE FIELD alt_title COMPUTED 
+optional description goes here
+SPLIT(Field_Information, " AS ", 2) IF FIND(" AS ", Field_Information)
+BLANKS(10)
+
+
+COMMENT ***** Create a format (table layout) table for each unique table name
+COMMENT ***** counted above.
+ASSIGN v_table_counter = 1
+DO SCRIPT Create_Table_Layout WHILE v_table_counter <= v_total_tables
+
+COMMENT ***** Review the navigator panel and verify all the tables were restored.
+
+COMMENT ***** Remove temporary tables, publish variables and restore the environment.
+DELETE Unique_Tables.FIL OK
+DELETE FORMAT Unique_Tables OK
+DELETE temp_table.FIL OK
+DELETE FORMAT temp_table OK
+DISPLAY VARIABLES
+SET SAFETY ON
+^FORMAT   Employee_Master                    Employee_Master                  "" "Employee_Master.txt" 0 ASCII 
+[PARENT_FOLDER_ID] 1295826072
+[LASTVIEW] "Default_View"
+^FORMAT   Payroll                            Payroll                          "" "Payroll.txt" 0 ASCII 
+[PARENT_FOLDER_ID] 1295826072
+[LASTVIEW] "Default_View"
+^REPORT   Default_View                       Employee_Master                  D.T,
+[SKIP] 0
+[TLINES] 1
+[RLINES] 1
+[LINE] 1
+empno                WIDTH 8 PICTURE ""
+[LINE] 1
+empname              PICTURE ""
+[LINE] 1
+empaddr              PICTURE ""
+[LINE] 1
+gender               WIDTH 8 PICTURE ""
+[LINE] 1
+hiredate             WIDTH 12
+^REPORT   Default_View                       Payroll                          D.T,
+[SKIP] 0
+[TLINES] 2
+[RLINES] 1
+[LINE] 1
+date_paid           
+[LINE] 1
+empno                WIDTH 5 PICTURE ""
+[LINE] 1
+empname              PICTURE ""
+[LINE] 1
+grosspay             WIDTH 12 PICTURE ""
+^REPORT   Default_View                       DR_Table_Layouts                 D.T,
+[SKIP] 0
+[TLINES] 1
+[RLINES] 1
+[LINE] 1
+TableName_and_Datafile WIDTH 74 PICTURE ""
+[LINE] 1
+Field_Information    WIDTH 80 PICTURE ""
+[LINE] 1
+table_name           WIDTH 31 PICTURE ""
+[LINE] 1
+data_file            WIDTH 74 PICTURE ""
+[LINE] 1
+field_name           WIDTH 31 PICTURE ""
+[LINE] 1
+field_type           WIDTH 15 PICTURE ""
+[LINE] 1
+start                WIDTH 12 PICTURE ""
+[LINE] 1
+length               WIDTH 12 PICTURE ""
+[LINE] 1
+decimals             WIDTH 12 PICTURE ""
+[LINE] 1
+date_format          WIDTH 20 PICTURE ""
+[LINE] 1
+alt_title            WIDTH 80 PICTURE ""
+^FORMAT   DR_Table_Layouts                   DR_Table_Layouts                 "" "DR_Table_Layouts.FIL" 0 ASCII 
+[PARENT_FOLDER_ID] 1295826072
+[LASTVIEW] "Default_View"
+[RETRIEVE] 0
+[REFRESH] PDF "C:\Data\00_Current_Work\000_student_files\303_Functions_and_Scripts\Scripts_302\Disaster_Recovery\DR_Table_Layouts.FIL" FROM "DR_Table_Layouts.pdf" 0 RECORD "Header1" 1 1 0 TEST 0 0 AT 1,1,0 7 "Table " FIELD "TableName_and_Datafile" C AT 1,7 SIZE 74,1 DEC 0 WID 74  PIC "" AS "" RECORD "Detail" 0 1 0 TEST 0 7 AT 1,1,0 1 " ASCII " TEST 0 7 AT 1,0,0 1 " DATE " TEST 0 7 AT 1,0,0 7 " PRINT " FIELD "Field_Information" C AT 1,1 SIZE 80,1 DEC 0 WID 81  PIC "" AS "" 
+
+^OPEN F "DR_Table_Layouts"
